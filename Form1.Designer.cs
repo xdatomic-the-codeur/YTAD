@@ -36,6 +36,7 @@
             txt_URL = new TextBox();
             button1 = new Button();
             dgv_downloads = new DataGridView();
+            isDownload = new DataGridViewCheckBoxColumn();
             Artist = new DataGridViewTextBoxColumn();
             Album = new DataGridViewTextBoxColumn();
             SongNum = new DataGridViewTextBoxColumn();
@@ -95,6 +96,10 @@
             // 
             // dgv_downloads
             // 
+            dgv_downloads.AllowUserToAddRows = false;
+            dgv_downloads.AllowUserToDeleteRows = false;
+            dgv_downloads.AllowUserToResizeColumns = false;
+            dgv_downloads.AllowUserToResizeRows = false;
             dgv_downloads.BackgroundColor = Color.Azure;
             dgv_downloads.BorderStyle = BorderStyle.Fixed3D;
             dataGridViewCellStyle1.Alignment = DataGridViewContentAlignment.MiddleLeft;
@@ -106,7 +111,7 @@
             dataGridViewCellStyle1.WrapMode = DataGridViewTriState.True;
             dgv_downloads.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
             dgv_downloads.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dgv_downloads.Columns.AddRange(new DataGridViewColumn[] { Artist, Album, SongNum, Song, Duration, Link, DL, Tagged, Converted });
+            dgv_downloads.Columns.AddRange(new DataGridViewColumn[] { isDownload, Artist, Album, SongNum, Song, Duration, Link, DL, Tagged, Converted });
             dataGridViewCellStyle3.Alignment = DataGridViewContentAlignment.MiddleLeft;
             dataGridViewCellStyle3.BackColor = Color.Azure;
             dataGridViewCellStyle3.Font = new Font("Verdana", 9.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
@@ -118,11 +123,19 @@
             dgv_downloads.Location = new Point(12, 69);
             dgv_downloads.Margin = new Padding(3, 2, 3, 2);
             dgv_downloads.Name = "dgv_downloads";
-            dgv_downloads.Size = new Size(775, 322);
+            dgv_downloads.Size = new Size(813, 322);
             dgv_downloads.TabIndex = 3;
             dgv_downloads.CellContentClick += dgv_downloads_CellContentClick;
             dgv_downloads.CellDoubleClick += dgv_downloads_CellDoubleClick;
             dgv_downloads.MouseDown += dgv_downloads_MouseDown;
+            // 
+            // isDownload
+            // 
+            isDownload.HeaderText = "DL";
+            isDownload.Name = "isDownload";
+            isDownload.Resizable = DataGridViewTriState.False;
+            isDownload.SortMode = DataGridViewColumnSortMode.Automatic;
+            isDownload.Width = 50;
             // 
             // Artist
             // 
@@ -239,7 +252,7 @@
             // 
             // btn_Resume
             // 
-            btn_Resume.Location = new Point(712, 400);
+            btn_Resume.Location = new Point(750, 400);
             btn_Resume.Name = "btn_Resume";
             btn_Resume.Size = new Size(75, 23);
             btn_Resume.TabIndex = 8;
@@ -286,7 +299,7 @@
             lbl_status.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             lbl_status.Location = new Point(93, 403);
             lbl_status.Name = "lbl_status";
-            lbl_status.Size = new Size(613, 15);
+            lbl_status.Size = new Size(643, 15);
             lbl_status.TabIndex = 9;
             lbl_status.TextAlign = ContentAlignment.MiddleCenter;
             // 
@@ -302,7 +315,7 @@
             AutoScaleDimensions = new SizeF(8F, 16F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.Azure;
-            ClientSize = new Size(802, 432);
+            ClientSize = new Size(832, 432);
             Controls.Add(lbl_status);
             Controls.Add(btn_Resume);
             Controls.Add(btn_Pause);
@@ -339,15 +352,6 @@
         private System.Windows.Forms.Timer timer1;
         private System.Windows.Forms.Timer timer_tag;
         private System.Windows.Forms.Timer timer_convert;
-        private DataGridViewTextBoxColumn Artist;
-        private DataGridViewTextBoxColumn Album;
-        private DataGridViewTextBoxColumn SongNum;
-        private DataGridViewTextBoxColumn Song;
-        private DataGridViewTextBoxColumn Duration;
-        private DataGridViewTextBoxColumn Link;
-        private DataGridViewTextBoxColumn DL;
-        private DataGridViewTextBoxColumn Tagged;
-        private DataGridViewTextBoxColumn Converted;
         private Button btn_Pause;
         private Button btn_Resume;
         private ContextMenuStrip contextMenuStrip1;
@@ -357,5 +361,15 @@
         private Label lbl_status;
         private System.Windows.Forms.Timer timer_count;
         private ToolStripMenuItem saveTableToolStripMenuItem;
+        private DataGridViewCheckBoxColumn isDownload;
+        private DataGridViewTextBoxColumn Artist;
+        private DataGridViewTextBoxColumn Album;
+        private DataGridViewTextBoxColumn SongNum;
+        private DataGridViewTextBoxColumn Song;
+        private DataGridViewTextBoxColumn Duration;
+        private DataGridViewTextBoxColumn Link;
+        private DataGridViewTextBoxColumn DL;
+        private DataGridViewTextBoxColumn Tagged;
+        private DataGridViewTextBoxColumn Converted;
     }
 }

@@ -40,13 +40,25 @@ namespace YTPD
             var youtube = new YoutubeClient();
             string album = "";
             string thumb = "";
+            bool isAlbum = true;
+
+            if (txt_URL.Text.ToLower().Contains("watch")) isAlbum = false;
 
             // You can specify either the video URL or its ID
             try
             {
-                var albuminfo = await youtube.Playlists.GetAsync(txt_URL.Text);
-                album = albuminfo.Title;
-                thumb = albuminfo.Thumbnails[1].Url;
+                if (isAlbum)
+                {
+                    var albuminfo = await youtube.Playlists.GetAsync(txt_URL.Text);
+                    album = albuminfo.Title;
+                    thumb = albuminfo.Thumbnails[1].Url;
+                }
+                else
+                {
+                    var vid = await youtube.Videos.GetAsync(txt_URL.Text);
+                    album = vid.Title;
+                    thumb = vid.Thumbnails[1].Url;
+                }
             }
             catch (Exception ex)
             {
@@ -61,26 +73,52 @@ namespace YTPD
 
             // Get all playlist videos
             Int16 songnum = 1;
-            try
+            if (isAlbum)
             {
-                await foreach (var video in youtube.Playlists.GetVideosAsync(txt_URL.Text))
+                try
                 {
-                    var title = video.Title;
-                    var band = video.Author.ChannelTitle;
-                    var author = video.Author;
-                    var duration = video.Duration;
-                    var link = video.Url;
+                    await foreach (var video in youtube.Playlists.GetVideosAsync(txt_URL.Text))
+                    {
+                        var title = video.Title;
+                        var band = video.Author.ChannelTitle;
+                        var author = video.Author;
+                        var duration = video.Duration;
+                        var link = video.Url;
 
-                    band = band.Replace("- Topic", "").Trim();
+                        band = band.Replace("- Topic", "").Trim();
 
-                    dgv_downloads.Rows.Add(band, album, songnum.ToString(), title, duration, link, "0", "0", "No");
-                    songnum++;
+                        dgv_downloads.Rows.Add(true, band, album, songnum.ToString(), title, duration, link, "0", "0", "No");
+                        songnum++;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    WriteError(ex.ToString());
+                    MessageBox.Show("Unable to grab playlist: \r" + ex.ToString());
                 }
             }
-            catch (Exception ex)
+
+            if (!isAlbum)
             {
-                WriteError(ex.ToString());
-                MessageBox.Show("Unable to grab playlist: \r" + ex.ToString());
+                try
+                {
+                    var vid = await youtube.Videos.GetAsync(txt_URL.Text);
+
+                    var title = vid.Title;
+                    var band = vid.Author.ChannelTitle;
+                    var author = vid.Author;
+                    var duration = vid.Duration;
+                    var link = vid.Url;
+
+                    band = band.Replace("- Topic", "").Trim();
+                    dgv_downloads.Rows.Add(true, band, album, songnum.ToString(), title, duration, link, "0", "0", "No");
+                    songnum++;
+                }
+                catch (Exception ex)
+                {
+                    WriteError(ex.ToString());
+                    MessageBox.Show("Unable to grab vid: \r" + ex.ToString());
+                }
             }
 
             dgv_downloads.Refresh();
@@ -116,7 +154,7 @@ namespace YTPD
                 // if the user paused downloading, then go away
                 if (isPaused) return;
 
-                if (row.Cells[0].Value == null || row.Cells[0].Value.ToString().Length < 1)
+                if (row.Cells[1].Value == null || row.Cells[1].Value.ToString().Length < 1)
                 {
                     try
                     {
@@ -131,7 +169,7 @@ namespace YTPD
                     continue;
                 }
 
-                if (row.Cells[0].Value.ToString().ToLower().Contains("romeo"))
+                if (row.Cells[1].Value.ToString().ToLower().Contains("romeo"))
                 {
                     song = "";
                 }
@@ -142,6 +180,11 @@ namespace YTPD
 
                 if (dlpercent == 0)
                 {
+                    bool isDL = Convert.ToBoolean(row.Cells["isDownload"].Value);
+                    Console.WriteLine(row.Cells["DL"].Value.ToString());
+
+                    if (!isDL) continue; // skip if not wanted by user
+
                     artist = row.Cells["Artist"].Value.ToString();
                     album = row.Cells["Album"].Value.ToString();
                     songnum = row.Cells["SongNum"].Value.ToString();
@@ -297,7 +340,7 @@ namespace YTPD
 
             foreach (DataGridViewRow row in dgv_downloads.Rows)
             {
-                if (row.Cells[0].Value == null || row.Cells[0].Value == "") return;
+                if (row.Cells[1].Value == null || row.Cells[1].Value == "") return;
 
                 Int16 dlpercent = Convert.ToInt16(row.Cells["DL"].Value);
                 if (dlpercent == 100 && row.Cells["Tagged"].Value.ToString() == "0")
@@ -510,7 +553,7 @@ namespace YTPD
             {
                 foreach (DataGridViewRow row in dgv_downloads.Rows)
                 {
-                    if (row.Cells[0].Value == null || row.Cells[0].Value.ToString().Length == 0 || row.Cells["DL"].Value.ToString() != "100") continue;
+                    if (row.Cells[1].Value == null || row.Cells[1].Value.ToString().Length == 0 || row.Cells["DL"].Value.ToString() != "100") continue;
                     // review levenshtein distance for mp3 file and song name so we only convert the mp3
                     string foundsong = nonMp3File.Substring(nonMp3File.LastIndexOf('\\') + 2);
                     foundsong = foundsong.Substring(foundsong.IndexOf('-') + 2, foundsong.LastIndexOf('.') - 4);
@@ -557,10 +600,6 @@ namespace YTPD
             btn_Resume.Visible = false;
         }
 
-        private async void button3_Click(object sender, EventArgs e)
-        {
-        }
-
         private async void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (isSaving != false)
@@ -601,7 +640,7 @@ namespace YTPD
                 int rowIndex = e.RowIndex;
 
                 // get the selected band name
-                string bandname = dgv_downloads.Rows[rowIndex].Cells[0].Value.ToString();
+                string bandname = dgv_downloads.Rows[rowIndex].Cells[1].Value.ToString();
 
                 // correct the band name
                 string userInput = Interaction.InputBox("If the band name is incorrect, this is your chance to update it:", "YTAD", bandname);
@@ -613,12 +652,12 @@ namespace YTPD
                     foreach (DataGridViewRow row in dgv_downloads.Rows)
                     {
                         // no null cells!
-                        if (row.Cells[0].Value != null && row.Cells[0].Value.ToString().Length > 1)
+                        if (row.Cells[1].Value != null && row.Cells[1].Value.ToString().Length > 1)
                         {
                             // if the band name is the same as the one that needs correcting then correct it
-                            if (row.Cells[0].Value.ToString() == bandname)
+                            if (row.Cells[1].Value.ToString() == bandname)
                             {
-                                row.Cells[0].Value = userInput;
+                                row.Cells[1].Value = userInput;
                             }
                         }
                     }
@@ -630,11 +669,6 @@ namespace YTPD
                     SaveDataGridViewToCSV();
                 }
             }
-        }
-
-        private void btn_secret_MouseDoubleClick(object sender, MouseEventArgs e)
-        {
-
         }
 
         private void dgv_downloads_MouseDown(object sender, MouseEventArgs e)
@@ -656,11 +690,6 @@ namespace YTPD
             }
         }
 
-        private void btn_secret_Click(object sender, EventArgs e)
-        {
-
-        }
-
         private void openDataFileToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Process.Start("explorer.exe", Application.StartupPath);
@@ -670,7 +699,7 @@ namespace YTPD
         {
             foreach (DataGridViewRow row in dgv_downloads.Rows)
             {
-                if (row.Cells[0].Value == null || row.Cells[0].Value.ToString().Length == 0) continue;
+                if (row.Cells[1].Value == null || row.Cells[1].Value.ToString().Length == 0) continue;
 
                 if (row.Cells["Converted"].Value.ToString() == "No")
                 {
@@ -688,7 +717,7 @@ namespace YTPD
 
             foreach (DataGridViewRow row in dgv_downloads.Rows)
             {
-                if (row.Cells[0].Value != null && row.Cells[0].Value.ToString().Length > 1)
+                if (row.Cells[1].Value != null && row.Cells[1].Value.ToString().Length > 1)
                 {
                     try
                     {
@@ -701,6 +730,12 @@ namespace YTPD
                     {
                         WriteError(ex.ToString());
                         break;
+                    }
+
+                    if (NotStarted == 0 && Failed == 0 && Completed > 1)
+                    {
+                        // if all items are completed and no items are failed, pause the download to avoid issues
+                        btn_Pause_Click(sender, e);
                     }
 
                     continue;
@@ -725,11 +760,6 @@ namespace YTPD
             {
                 sr.WriteLine(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " - " + msg);
             }
-        }
-
-        private void button3_Click_1(object sender, EventArgs e)
-        {
-
         }
     }
 }
